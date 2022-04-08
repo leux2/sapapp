@@ -1,0 +1,62 @@
+_schema-version: "3.2"
+ID: sapapp
+version: 0.0.1
+modules:
+
+###############################################
+
+- name: sapapp-srv
+  type: nodejs
+  path: srv
+  requires:
+  - name: fullapp-uaa
+  - name: hdi_db
+  provides:
+  - name: srv_api
+    properties:
+      url: ${default-url}
+  parameters:
+    disk-quota: 1024M
+    memory: 512M
+
+#################################################
+
+- name: sapapp
+  type: html5
+  path: app
+  requires:
+  - name: fullapp-uaa
+  - name: srv_api
+    group: destinations
+    properties:
+      forwardAuthToken: true
+      name: srv
+      url: ~{url}
+  parameters:
+    disk-quota: 256M
+    memory: 128M
+
+###################################################
+
+- name: db
+  type: hdb
+  path: db
+  requires:
+  - name: hdi_db
+  parameters:
+    memory: 256M
+    disk-quota: 512M
+
+#########################################
+
+resources:
+- name: fullapp-uaa
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-plan: application
+- name: hdi_db
+  type: com.sap.xs.hdi-container
+  properties:
+    hdi-container-name: ${service-name}
